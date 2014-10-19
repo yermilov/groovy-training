@@ -7,7 +7,7 @@ class Money implements Comparable<Money> {
     BigDecimal amount
     String currency
 
-    RESTClient restClient = new RESTClient('http://api.exchangeratelab.com/api/')
+    RESTClient restClient = new RESTClient('http://openexchangerates.org/api/')
 
     public Money(BigDecimal amount, String currency) {
         this.amount = amount
@@ -37,13 +37,13 @@ class Money implements Comparable<Money> {
             } else {
                 BigDecimal rate1
                 if (this.currency != 'USD') {
-                    rate1 = restClient.get(path: "single/${this.currency}", params: [apikey: '7A8A33405E90BB0B9996736BCC7131A6']).data.rate.rate
+                    rate1 = restClient.get(path: "/api/latest.json", params: [app_id: '1167968b58814e429ed93644a887cd65']).data.rates."${this.currency}"
                 } else {
                     rate1 = 1.0
                 }
                 BigDecimal rate2
                 if (other.currency != 'USD') {
-                    rate2 = restClient.get(path: "single/${other.currency}", params: [apikey: '7A8A33405E90BB0B9996736BCC7131A6']).data.rate.rate
+                    rate2 = restClient.get(path: "/api/latest.json", params: [app_id: '1167968b58814e429ed93644a887cd65']).data.rates."${other.currency}"
                 } else {
                     rate2 = 1.0
                 }
@@ -83,21 +83,28 @@ class Money implements Comparable<Money> {
 
     @Override
     int compareTo(Money other) {
-        BigDecimal thisUsd = toUsd(this)
-        BigDecimal otherUsd = toUsd(other)
-
-        return thisUsd.compareTo(otherUsd)
+        if (this.currency == null && other.currency == null) {
+            return this.amount <=> other.amount
+        }
+        if (this.currency != null && other.currency == null) {
+            return toUsd(this.amount, this.currency) <=> toUsd(other.amount, this.currency)
+        }
+        if (this.currency == null && other.currency != null) {
+            return toUsd(this.amount, other.currency) <=> toUsd(other.amount, other.currency)
+        }
+        if (this.currency != null && other.currency != null) {
+            return toUsd(this.amount, this.currency) <=> toUsd(other.amount, other.currency)
+        }
     }
 
-    BigDecimal toUsd(Money money) {
+    BigDecimal toUsd(BigDecimal amount, String currency) {
         BigDecimal rate
-        if (money.currency != 'USD') {
-            rate = restClient.get(path: "single/${money.currency}", params: [apikey: '7A8A33405E90BB0B9996736BCC7131A6']).data.rate.rate
+        if (currency != 'USD') {
+            rate = restClient.get(path: "/api/latest.json", params: [app_id: '1167968b58814e429ed93644a887cd65']).data.rates."${currency}"
         } else {
             rate = 1.0
         }
-
-        return money.amount / rate
+        return amount / rate
     }
 
     Money next() {
