@@ -15,7 +15,7 @@ Maecenas ullamcorper felis eu sem ultrices, vel vulputate ligula volutpat. Donec
 '''
 
 text
-    .split()
+    .tokenize()
 
     .collect{ String token -> token.toLowerCase() }
 
